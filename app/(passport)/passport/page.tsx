@@ -1,0 +1,91 @@
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { getCurrentFellow } from "@/lib/auth";
+import { loadPassport } from "@/lib/supabase/queries/passport";
+import { mrzLines } from "@/lib/mrz";
+import { copy } from "@/lib/copy";
+import { PassportCard } from "@/components/passport/passport-card";
+import { StampGrid } from "@/components/passport/stamp-grid";
+import { EditProfileSheet } from "@/components/passport/edit-profile-sheet";
+import {
+  PassportSection,
+  AboutSection,
+  JourneyTimeline,
+  AchievementList,
+  PerkList,
+} from "@/components/passport/sections";
+import { BrandMark } from "@/components/brand-mark";
+
+export const dynamic = "force-dynamic";
+
+export default async function PassportHome() {
+  const fellow = await getCurrentFellow();
+  if (!fellow) redirect("/");
+  const view = await loadPassport(fellow.id);
+  if (!view) redirect("/");
+
+  const mrz = mrzLines({
+    fellowNumber: fellow.fellow_number,
+    displayName: fellow.display_name,
+    username: fellow.username,
+    joinYear: new Date(fellow.created_at).getUTCFullYear(),
+  });
+
+  return (
+    <div className="min-h-[100dvh]">
+      <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
+        <BrandMark />
+        {fellow.username && (
+          <Link
+            href={`/${fellow.username}`}
+            className="text-sm text-ink-3 underline underline-offset-4 hover:text-ink"
+          >
+            View public →
+          </Link>
+        )}
+      </header>
+
+      <main className="mx-auto max-w-3xl px-6 pb-24">
+        <div className="mx-auto max-w-md py-4">
+          <PassportCard
+            displayName={fellow.display_name}
+            fellowNumber={fellow.fellow_number}
+            username={fellow.username}
+            currentHouse={
+              view.currentHouse
+                ? { name: view.currentHouse.name, flag: view.currentHouse.flag }
+                : null
+            }
+            avatarUrl={fellow.avatar_url}
+            mrz={mrz}
+          />
+        </div>
+
+        <PassportSection title={copy.passport.sections.about}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <AboutSection fellow={fellow} />
+            </div>
+            <EditProfileSheet fellow={fellow} />
+          </div>
+        </PassportSection>
+
+        <PassportSection title={copy.passport.sections.journey}>
+          <JourneyTimeline events={view.timeline} />
+        </PassportSection>
+
+        <PassportSection title={copy.passport.sections.stamps}>
+          <StampGrid stamps={view.stamps} canMarkSeen />
+        </PassportSection>
+
+        <PassportSection title={copy.passport.sections.achievements}>
+          <AchievementList items={view.achievements} />
+        </PassportSection>
+
+        <PassportSection title={copy.passport.sections.perks}>
+          <PerkList items={view.perks} />
+        </PassportSection>
+      </main>
+    </div>
+  );
+}

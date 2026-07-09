@@ -1,36 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Cracked Passport
 
-## Getting Started
+The lifelong passport of every Cracked Fellow. Next.js App Router + Supabase +
+Clerk + Resend + Avalanche (via a swappable chain layer). The blockchain is
+invisible — the UI only ever says "Passport", "Claim", "Verified".
 
-First, run the development server:
+## Run it locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # fill in the values below
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs fully with `CHAIN_MODE=stub` — no wallet, contract, or Pinata
+needed. Passports are marked "issued" without touching a chain.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## What you must configure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Service | Needed for | Setup |
+|---|---|---|
+| **Clerk** | Sign-in (Google) | Create an app, enable Google, copy the two keys. Set `/sign-in` as the sign-in URL. |
+| **Supabase** | All data | Run `supabase/migrations/*.sql` then `supabase/seed.sql` in the SQL editor. Copy the project URL + **service-role** key (no anon key needed). |
+| **Resend** | Acceptance email | Verify `crackedhq.com` (SPF+DKIM), set `RESEND_API_KEY`. Optional — without it, approval prints a copyable claim link instead. |
+| **Pinata** | On-chain metadata | Only for `CHAIN_MODE=fuji/avalanche`. Scoped JWT with pinJSON. |
+| **Deployer wallet** | Minting | Only for chain modes. Fresh key, funded at the Fuji faucet. Deploy with Foundry (below). |
 
-## Learn More
+Set `ADMIN_EMAILS` to your email — that's the only account that can see `/admin`.
 
-To learn more about Next.js, take a look at the following resources:
+## Golden path (stub mode)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. `/apply` → submit an application.
+2. `/admin/applications` → Approve → becomes Fellow #001, claim link generated
+   (emailed if Resend is set, else copyable from the toast).
+3. Open the claim link → sign in with Google → pick a handle → verify → the
+   creation animation → `/passport`.
+4. `/admin/fellows/<id>` → issue a house stamp / achievement / perk.
+5. Visit `/<handle>` for the public passport.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Smart contract (Phase F — optional)
 
-## Deploy on Vercel
+```bash
+cd contracts
+forge test                                   # 6 tests, incl. soulbound revert
+forge script script/Deploy.s.sol --rpc-url fuji --broadcast --verify
+# put the deployed address in PASSPORT_CONTRACT_ADDRESS, set CHAIN_MODE=fuji
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+`CrackedPassport.sol` is a soulbound ERC-721: tokenId == fellow number,
+owner-only mint/update, transfers revert (with an `adminTransfer` escape hatch
+for lost wallets). The chain holds ownership + a metadata pointer only; stamps
+and achievements live in Postgres and refresh the token URI.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Architecture notes
+
+- **Auth boundary:** Supabase is reached only with the service-role key from
+  server code. RLS is on with no policies (deny-by-default). All authorization
+  is in `lib/auth.ts` (`requireFellow`, `requireAdmin`).
+- **No-crypto-language:** every user-facing string is in `lib/copy.ts`. A grep
+  for `nft|mint|wallet address|blockchain` over `app/` + `components/` (outside
+  `lib/chain`) must stay empty.
+- **Chain is swappable:** `lib/passport/issuer.ts` picks stub / fuji / avalanche
+  by `CHAIN_MODE`. Mainnet is an env flip.
