@@ -1,12 +1,16 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
 import { getCurrentFellow } from "@/lib/auth";
+import { getApplicationByClerkUser } from "@/lib/supabase/queries/applications";
 import { loadPassport } from "@/lib/supabase/queries/passport";
 import { mrzLines } from "@/lib/mrz";
 import { copy } from "@/lib/copy";
 import { PassportCard } from "@/components/passport/passport-card";
 import { StampGrid } from "@/components/passport/stamp-grid";
 import { EditProfileSheet } from "@/components/passport/edit-profile-sheet";
+import { RequestVerification } from "@/components/passport/request-verification";
+import { UnderReview } from "@/components/passport/under-review";
 import {
   PassportSection,
   AboutSection,
@@ -19,8 +23,22 @@ import { BrandMark } from "@/components/brand-mark";
 export const dynamic = "force-dynamic";
 
 export default async function PassportHome() {
+  const { userId } = await auth();
   const fellow = await getCurrentFellow();
-  if (!fellow) redirect("/");
+
+  // Not a fellow yet → route by application state (self-serve verification).
+  if (!fellow) {
+    const app = userId ? await getApplicationByClerkUser(userId) : null;
+    if (app?.status === "pending") return <UnderReview status="pending" />;
+    if (app?.status === "rejected") return <UnderReview status="rejected" />;
+    return <RequestVerification />;
+  }
+
+  // Fellow exists but hasn't finished onboarding → pick handle + verify.
+  if (fellow.status !== "claimed" || !fellow.username) {
+    redirect("/welcome");
+  }
+
   const view = await loadPassport(fellow.id);
   if (!view) redirect("/");
 
@@ -59,6 +77,14 @@ export default async function PassportHome() {
             avatarUrl={fellow.avatar_url}
             mrz={mrz}
           />
+          {view.passport && view.passport.status !== "issued" && (
+            <Link
+              href="/verify"
+              className="mt-4 flex items-center justify-center rounded-full border border-black/10 py-2.5 text-sm text-ink-2 transition-colors hover:bg-black/[0.03]"
+            >
+              Secure your Passport on-chain →
+            </Link>
+          )}
         </div>
 
         <PassportSection title={copy.passport.sections.about}>

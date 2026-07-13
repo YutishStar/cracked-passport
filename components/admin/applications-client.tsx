@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import { approveApplication, rejectApplication } from "@/app/(admin)/admin/actions";
+import { approveApplication, rejectApplication } from "@/app/(admin)/yutish/actions";
 import type { Application } from "@/lib/supabase/types";
 
 export function ApplicationsClient({ applications }: { applications: Application[] }) {
@@ -16,14 +16,20 @@ export function ApplicationsClient({ applications }: { applications: Application
       try {
         const res = await approveApplication(app.id);
         setItems((cur) => cur.filter((a) => a.id !== app.id));
-        if (res.emailed) {
+        if (res.selfServe) {
+          toast.success(`Approved as Fellow #${res.fellowNumber}.`, {
+            description: res.emailed
+              ? "Email sent — they can open their Passport."
+              : "They can open their Passport now.",
+          });
+        } else if (res.emailed) {
           toast.success(`Approved as Fellow #${res.fellowNumber}. Email sent.`);
         } else {
           toast.success(`Approved as Fellow #${res.fellowNumber}.`, {
-            description: "Email not configured — copy the claim link.",
+            description: "Copy the claim link for them.",
             action: {
               label: "Copy link",
-              onClick: () => navigator.clipboard.writeText(res.claimUrl),
+              onClick: () => res.claimUrl && navigator.clipboard.writeText(res.claimUrl),
             },
             duration: 10000,
           });

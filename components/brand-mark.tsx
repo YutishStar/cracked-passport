@@ -18,7 +18,7 @@ export function BrandMark({
       )}
       aria-label="Cracked — home"
     >
-      Cracked<span className="text-moss">.</span>
+      crackedHQ<span className="text-moss">.</span>
     </Link>
   );
 }

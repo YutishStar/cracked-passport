@@ -24,7 +24,7 @@ export default async function FellowsPage() {
               <tr key={f.id} className="border-b border-black/[0.04] last:border-0">
                 <td className="px-5 py-3 font-pixel text-lg text-ink">{fmt(f.fellow_number)}</td>
                 <td className="px-5 py-3">
-                  <Link href={`/admin/fellows/${f.id}`} className="text-ink hover:underline">
+                  <Link href={`/yutish/fellows/${f.id}`} className="text-ink hover:underline">
                     {f.display_name}
                   </Link>
                 </td>

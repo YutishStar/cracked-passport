@@ -14,13 +14,13 @@ export default async function AdminLayout({
   return (
     <div className="flex min-h-[100dvh]">
       <aside className="hidden w-56 shrink-0 flex-col border-r border-black/[0.06] p-6 md:flex">
-        <BrandMark href="/admin" className="text-xl" />
+        <BrandMark href="/yutish" className="text-xl" />
         <p className="eyebrow mt-1">Admin</p>
         <nav className="mt-8 flex flex-col gap-1 text-sm">
-          <Link href="/admin/applications" className="rounded-lg px-3 py-2 text-ink-2 hover:bg-black/[0.04]">
+          <Link href="/yutish/applications" className="rounded-lg px-3 py-2 text-ink-2 hover:bg-black/[0.04]">
             Applications
           </Link>
-          <Link href="/admin/fellows" className="rounded-lg px-3 py-2 text-ink-2 hover:bg-black/[0.04]">
+          <Link href="/yutish/fellows" className="rounded-lg px-3 py-2 text-ink-2 hover:bg-black/[0.04]">
             Fellows
           </Link>
         </nav>

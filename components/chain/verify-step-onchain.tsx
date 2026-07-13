@@ -30,6 +30,8 @@ function Inner() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const [busy, setBusy] = useState(false);
+  const [manual, setManual] = useState("");
+  const manualValid = /^0x[a-fA-F0-9]{40}$/.test(manual.trim());
 
   async function proceed(addr: string | null) {
     setBusy(true);
@@ -52,7 +54,7 @@ function Inner() {
       <h1 className="font-display text-3xl text-ink">{copy.claim.verifyTitle}</h1>
       <p className="mt-4 max-w-sm text-ink-3">{copy.claim.verifyBody}</p>
 
-      <div className="mt-9 flex flex-col items-center gap-4">
+      <div className="mt-9 flex w-full flex-col items-center gap-4">
         <ConnectButton label={copy.claim.verifyAction} showBalance={false} chainStatus="none" />
         {isConnected && address && (
           <button
@@ -63,10 +65,34 @@ function Inner() {
             {busy ? "…" : copy.claim.welcomeContinue}
           </button>
         )}
+
+        {/* Fallback for when the wallet popup won't cooperate: paste an address. */}
+        <div className="flex w-full items-center gap-3 py-1 text-xs text-ink-4">
+          <span className="h-px flex-1 bg-black/10" />
+          or paste your wallet address
+          <span className="h-px flex-1 bg-black/10" />
+        </div>
+        <div className="flex w-full gap-2">
+          <input
+            value={manual}
+            onChange={(e) => setManual(e.target.value)}
+            placeholder="0x…"
+            spellCheck={false}
+            className="min-w-0 flex-1 rounded-xl border border-black/10 bg-white px-4 py-3 font-mono text-sm text-ink outline-none focus:border-ink/40"
+          />
+          <button
+            onClick={() => proceed(manual.trim())}
+            disabled={busy || !manualValid}
+            className="rounded-xl bg-ink px-5 text-sm text-paper disabled:opacity-40"
+          >
+            {busy ? "…" : "Secure"}
+          </button>
+        </div>
+
         <button
           onClick={() => proceed(null)}
           disabled={busy}
-          className="text-sm text-ink-4 underline underline-offset-4 hover:text-ink-2 disabled:opacity-50"
+          className="mt-2 text-sm text-ink-4 underline underline-offset-4 hover:text-ink-2 disabled:opacity-50"
         >
           {copy.claim.verifyLater}
         </button>

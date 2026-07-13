@@ -29,7 +29,7 @@ export default async function FellowDetailPage({
 
   return (
     <div>
-      <Link href="/admin/fellows" className="eyebrow hover:text-ink">
+      <Link href="/yutish/fellows" className="eyebrow hover:text-ink">
         ← Fellows
       </Link>
       <div className="mt-4 flex items-baseline gap-4">

@@ -91,7 +91,7 @@ export const copy = {
     subject: "Welcome to Cracked.",
     heading: "You're in.",
     body: "Congratulations. You've officially been accepted as a Cracked Fellow. Your Passport is waiting.",
-    button: "Claim Passport",
+    button: "Open your Passport",
   },
 } as const;
 

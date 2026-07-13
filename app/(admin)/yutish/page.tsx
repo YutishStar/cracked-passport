@@ -15,9 +15,9 @@ export default async function AdminHome() {
     <div>
       <h1 className="font-display text-4xl text-ink">Overview</h1>
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Stat label="Pending applications" value={pending.length} href="/admin/applications" />
-        <Stat label="Fellows" value={fellows.length} href="/admin/fellows" />
-        <Stat label="Claimed passports" value={claimed} href="/admin/fellows" />
+        <Stat label="Pending applications" value={pending.length} href="/yutish/applications" />
+        <Stat label="Fellows" value={fellows.length} href="/yutish/fellows" />
+        <Stat label="Claimed passports" value={claimed} href="/yutish/fellows" />
       </div>
     </div>
   );

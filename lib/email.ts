@@ -40,3 +40,8 @@ export async function sendAcceptanceEmail(params: {
 export function claimUrl(token: string): string {
   return `${env.appUrl.replace(/\/$/, "")}/claim/${token}`;
 }
+
+/** Link straight to the passport home (self-serve fellows are already bound). */
+export function passportUrl(): string {
+  return `${env.appUrl.replace(/\/$/, "")}/passport`;
+}

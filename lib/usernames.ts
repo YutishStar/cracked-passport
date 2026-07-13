@@ -6,6 +6,8 @@
  */
 export const RESERVED_USERNAMES = new Set([
   "admin",
+  "yutish",
+  "starcy",
   "api",
   "apply",
   "about",

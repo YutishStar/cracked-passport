@@ -1,11 +1,45 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { auth } from "@clerk/nextjs/server";
 import { requireFellow } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { createIssuer } from "@/lib/passport/issuer";
 import { updateFellowProfile, type ProfileUpdate } from "@/lib/supabase/queries/fellows";
+import { validateUsername } from "@/lib/usernames";
 import { env } from "@/lib/env";
+
+export type OnboardingResult =
+  | { ok: true; fellowNumber: number }
+  | { ok: false; error: string };
+
+/**
+ * Finish onboarding for a self-serve fellow (already bound to their Clerk
+ * account at approval): set their handle and flip to claimed. No claim token.
+ */
+export async function completeOnboarding(usernameInput: string): Promise<OnboardingResult> {
+  const { userId } = await auth();
+  if (!userId) return { ok: false, error: "Please sign in first." };
+
+  const check = validateUsername(usernameInput);
+  if (!check.ok) return { ok: false, error: check.reason };
+
+  const { data, error } = await supabaseAdmin().rpc("complete_onboarding", {
+    p_clerk_user: userId,
+    p_username: check.value,
+  });
+  if (error) {
+    const msg = error.message || "";
+    if (msg.includes("username_taken"))
+      return { ok: false, error: "That handle is taken. Try another." };
+    if (msg.includes("not_a_fellow"))
+      return { ok: false, error: "You're not verified yet." };
+    return { ok: false, error: "Something went wrong. Try again." };
+  }
+  const row = Array.isArray(data) ? data[0] : data;
+  revalidatePath("/passport");
+  return { ok: true, fellowNumber: row?.fellow_number as number };
+}
 
 /**
  * Records the fellow's verified address (when present) and kicks off passport

@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import type { Fellow } from "@/lib/supabase/types";
 
-/** Primary email of the signed-in Clerk user, lowercased. Null if signed out. */
+/** Primary (verified) email of the signed-in user, lowercased. Null if signed out. */
 export async function currentUserEmail(): Promise<string | null> {
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress;

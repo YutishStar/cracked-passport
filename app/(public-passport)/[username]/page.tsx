@@ -58,7 +58,7 @@ export default async function PublicPassportPage({
 
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-6">
         <Link href="/" className="font-pixel text-xl text-ink">
-          Cracked<span className="text-moss">.</span>
+          crackedHQ<span className="text-moss">.</span>
         </Link>
         <span className="eyebrow">Public Passport</span>
       </header>

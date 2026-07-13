@@ -7,8 +7,8 @@ import {
   issueAchievement,
   assignPerk,
   setResidency,
-  resendClaimEmail,
-} from "@/app/(admin)/admin/actions";
+  resendWelcomeEmail,
+} from "@/app/(admin)/yutish/actions";
 import type { House, StampType, AchievementType, Perk } from "@/lib/supabase/types";
 
 interface Props {
@@ -79,16 +79,11 @@ export function FellowIssueForms({
           onClick={() =>
             startTransition(async () => {
               try {
-                const res = await resendClaimEmail(fellowId);
-                if (res.emailed) toast.success("Claim email resent.");
-                else
-                  toast("Email not configured.", {
-                    action: {
-                      label: "Copy link",
-                      onClick: () => navigator.clipboard.writeText(res.claimUrl),
-                    },
-                    duration: 10000,
-                  });
+                const res = await resendWelcomeEmail(fellowId);
+                if (res.emailed) toast.success("Welcome email sent.");
+                else if (res.reason === "no-email")
+                  toast("This fellow has no email on file.");
+                else toast.error("Email failed to send — check the server logs.");
               } catch {
                 toast.error("Failed.");
               }
@@ -96,7 +91,7 @@ export function FellowIssueForms({
           }
           className="rounded-full border border-black/10 px-5 py-2.5 text-sm text-ink-2 hover:bg-black/[0.03] disabled:opacity-50"
         >
-          Resend claim email
+          Resend welcome email
         </button>
       </div>
     </div>

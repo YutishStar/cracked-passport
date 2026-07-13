@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin, currentUserEmail } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { generateClaimToken } from "@/lib/claim-tokens";
-import { sendAcceptanceEmail, claimUrl } from "@/lib/email";
+import { sendAcceptanceEmail, claimUrl, passportUrl } from "@/lib/email";
 import { createIssuer } from "@/lib/passport/issuer";
 import { getFellowById } from "@/lib/supabase/queries/fellows";
 
@@ -24,22 +24,30 @@ export async function approveApplication(applicationId: string) {
   const row = Array.isArray(data) ? data[0] : data;
   const fellowId = row?.fellow_id as string;
   const fellowNumber = row?.fellow_number as number;
+  const boundClerkUser = (row?.clerk_user_id as string | null) ?? null;
 
-  // Load applicant email to send the claim link.
+  revalidatePath("/yutish/applications");
+  revalidatePath("/yutish/fellows");
+
+  // Self-serve: the applicant was signed in, so the fellow is already bound to
+  // their account — no claim link needed. Email them the good news if we have
+  // an address on file.
+  if (boundClerkUser) {
+    const fellow = await getFellowById(fellowId);
+    const emailed = fellow?.email
+      ? await sendAcceptanceEmail({ to: fellow.email, fellowNumber, claimUrl: passportUrl() })
+      : false;
+    return { fellowNumber, selfServe: true as const, claimUrl: null, emailed };
+  }
+
+  // Invite path: applicant had no account. Copy the claim link (email only if
+  // we happen to have one).
   const fellow = await getFellowById(fellowId);
   const url = claimUrl(token);
-  const emailed = fellow
-    ? await sendAcceptanceEmail({
-        to: fellow.email,
-        fellowNumber,
-        claimUrl: url,
-      })
+  const emailed = fellow?.email
+    ? await sendAcceptanceEmail({ to: fellow.email, fellowNumber, claimUrl: url })
     : false;
-
-  revalidatePath("/admin/applications");
-  revalidatePath("/admin/fellows");
-  // Return the claim URL so admin can copy it if email didn't send.
-  return { fellowNumber, claimUrl: url, emailed };
+  return { fellowNumber, selfServe: false as const, claimUrl: url, emailed };
 }
 
 export async function rejectApplication(applicationId: string) {
@@ -50,7 +58,7 @@ export async function rejectApplication(applicationId: string) {
     .update({ status: "rejected", reviewed_at: new Date().toISOString(), reviewed_by: reviewer })
     .eq("id", applicationId);
   if (error) throw error;
-  revalidatePath("/admin/applications");
+  revalidatePath("/yutish/applications");
 }
 
 export async function resendClaimEmail(fellowId: string) {
@@ -68,12 +76,28 @@ export async function resendClaimEmail(fellowId: string) {
     .from("claim_tokens")
     .insert({ fellow_id: fellowId, token_hash: tokenHash, expires_at: expiresAt });
   const url = claimUrl(token);
+  const emailed = fellow.email
+    ? await sendAcceptanceEmail({
+        to: fellow.email,
+        fellowNumber: fellow.fellow_number,
+        claimUrl: url,
+      })
+    : false;
+  return { claimUrl: url, emailed };
+}
+
+/** Re-send the "You're in" welcome email to a fellow (links to their passport). */
+export async function resendWelcomeEmail(fellowId: string) {
+  await requireAdmin();
+  const fellow = await getFellowById(fellowId);
+  if (!fellow) throw new Error("fellow not found");
+  if (!fellow.email) return { emailed: false, reason: "no-email" as const };
   const emailed = await sendAcceptanceEmail({
     to: fellow.email,
     fellowNumber: fellow.fellow_number,
-    claimUrl: url,
+    claimUrl: passportUrl(),
   });
-  return { claimUrl: url, emailed };
+  return { emailed, reason: emailed ? ("sent" as const) : ("failed" as const) };
 }
 
 async function addTimelineEvent(
@@ -105,7 +129,7 @@ export async function issueStamp(fellowId: string, stampTypeId: string, note?: s
   const name = (stamp as any)?.stamp_types?.name ?? "House";
   await addTimelineEvent(fellowId, "stamp", name);
   await createIssuer().refreshMetadata(fellowId);
-  revalidatePath(`/admin/fellows/${fellowId}`);
+  revalidatePath(`/yutish/fellows/${fellowId}`);
 }
 
 export async function issueAchievement(
@@ -127,7 +151,7 @@ export async function issueAchievement(
   const name = (data as any)?.achievement_types?.name ?? "Achievement";
   await addTimelineEvent(fellowId, "achievement", name);
   await createIssuer().refreshMetadata(fellowId);
-  revalidatePath(`/admin/fellows/${fellowId}`);
+  revalidatePath(`/yutish/fellows/${fellowId}`);
 }
 
 export async function assignPerk(fellowId: string, perkId: string) {
@@ -144,7 +168,7 @@ export async function assignPerk(fellowId: string, perkId: string) {
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   const name = (data as any)?.perks?.name ?? "Perk";
   await addTimelineEvent(fellowId, "perk", name);
-  revalidatePath(`/admin/fellows/${fellowId}`);
+  revalidatePath(`/yutish/fellows/${fellowId}`);
 }
 
 export async function setResidency(
@@ -169,7 +193,7 @@ export async function setResidency(
     .maybeSingle();
   /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   await addTimelineEvent(fellowId, "house_arrival", (house as any)?.name ?? "New house");
-  revalidatePath(`/admin/fellows/${fellowId}`);
+  revalidatePath(`/yutish/fellows/${fellowId}`);
 }
 
 export async function retryIssuance(fellowId: string) {
@@ -188,5 +212,5 @@ export async function retryIssuance(fellowId: string) {
     fellowNumber: fellow.fellow_number,
     toAddress: addr,
   });
-  revalidatePath(`/admin/fellows/${fellowId}`);
+  revalidatePath(`/yutish/fellows/${fellowId}`);
 }

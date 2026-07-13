@@ -26,7 +26,7 @@ export interface FellowLinks {
 export interface Application {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   github_url: string | null;
   links: FellowLinks;
   answers: Record<string, string>;
@@ -34,6 +34,7 @@ export interface Application {
   reviewed_at: string | null;
   reviewed_by: string | null;
   fellow_id: string | null;
+  clerk_user_id: string | null;
   created_at: string;
 }
 
@@ -44,7 +45,7 @@ export interface Fellow {
   clerk_user_id: string | null;
   username: string | null;
   display_name: string;
-  email: string;
+  email: string | null;
   bio: string | null;
   avatar_url: string | null;
   links: FellowLinks;

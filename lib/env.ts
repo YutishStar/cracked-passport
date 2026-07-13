@@ -31,7 +31,7 @@ export const env = {
   get resendApiKey() {
     return optional("RESEND_API_KEY");
   },
-  emailFrom: process.env.EMAIL_FROM ?? "Cracked <passport@crackedhq.com>",
+  emailFrom: process.env.EMAIL_FROM ?? "Cracked <passport@thecrackedhq.com>",
 
   // Pinata / IPFS
   get pinataJwt() {
@@ -50,7 +50,7 @@ export const env = {
   avalancheRpcUrl:
     process.env.AVALANCHE_RPC_URL ?? "https://api.avax.network/ext/bc/C/rpc",
 
-  // App
+  // App — admins are identified by their (verified) email. Comma-separated.
   adminEmails: (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
