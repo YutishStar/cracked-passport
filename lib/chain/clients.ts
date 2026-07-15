@@ -31,3 +31,9 @@ export function contractAddress(): Address {
   if (!addr) throw new Error("PASSPORT_CONTRACT_ADDRESS not set");
   return addr as Address;
 }
+
+export function certificatesAddress(): Address {
+  const addr = env.certificatesContractAddress;
+  if (!addr) throw new Error("CERTIFICATES_CONTRACT_ADDRESS not set");
+  return addr as Address;
+}

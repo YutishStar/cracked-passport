@@ -23,6 +23,9 @@ export default async function AdminLayout({
           <Link href="/yutish/fellows" className="rounded-lg px-3 py-2 text-ink-2 hover:bg-black/[0.04]">
             Fellows
           </Link>
+          <Link href="/yutish/activities" className="rounded-lg px-3 py-2 text-ink-2 hover:bg-black/[0.04]">
+            Activities
+          </Link>
         </nav>
       </aside>
       <main className="flex-1 px-6 py-10 md:px-12">{children}</main>

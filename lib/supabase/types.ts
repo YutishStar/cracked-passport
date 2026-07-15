@@ -14,7 +14,48 @@ export type TimelineKind =
   | "stamp"
   | "achievement"
   | "perk"
+  | "certificate"
+  | "build_post"
   | "custom";
+
+/** hackathon / Luma event / house activity / a fellow's daily build post. */
+export type ActivityKind =
+  | "hackathon"
+  | "luma"
+  | "house"
+  | "activity"
+  | "build_post";
+
+export interface Activity {
+  id: string;
+  token_id: number;
+  kind: ActivityKind;
+  title: string;
+  body: string | null;
+  image_url: string | null;
+  link_url: string | null;
+  house_id: string | null;
+  created_by_fellow_id: string | null;
+  created_by: string | null;
+  claim_code_hash: string | null;
+  is_open: boolean;
+  opens_at: string;
+  closes_at: string | null;
+  max_claims: number | null;
+  metadata_cid: string | null;
+  chain_status: PassportStatus;
+  tx_hash: string | null;
+  created_at: string;
+}
+
+export interface ActivityClaim {
+  id: string;
+  activity_id: string;
+  fellow_id: string;
+  claimed_at: string;
+  tx_hash: string | null;
+  chain_status: PassportStatus;
+}
 
 export interface FellowLinks {
   github?: string;

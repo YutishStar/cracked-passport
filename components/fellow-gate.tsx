@@ -1,5 +1,6 @@
 import { SignInButton } from "@clerk/nextjs";
 import { copy } from "@/lib/copy";
+import { CoreSignIn } from "@/components/chain/core-signin";
 
 /**
  * Shown to signed-out visitors who reach a gated Passport route.
@@ -50,8 +51,21 @@ export function FellowGate() {
           {copy.gate.body}
         </p>
 
+        {/* Already a Fellow: sign in with Core — connect + sign, no email needed. */}
+        <div className="mt-9">
+          <CoreSignIn />
+        </div>
+
+        <div className="my-5 flex items-center gap-3 text-[11px] uppercase tracking-widest text-ink-4">
+          <span className="h-px flex-1 bg-black/10" />
+          or
+          <span className="h-px flex-1 bg-black/10" />
+        </div>
+
+        {/* New here: apply / continue by email — this is also what unlocks the
+            acceptance email once you're accepted. */}
         <SignInButton mode="redirect" forceRedirectUrl="/passport">
-          <button className="mt-9 w-full rounded-full bg-ink py-3.5 text-sm text-paper shadow-[0_10px_30px_-10px_rgba(11,11,11,0.5)] transition-transform hover:-translate-y-px active:scale-[0.99]">
+          <button className="w-full rounded-full border border-black/10 bg-transparent py-3.5 text-sm text-ink-2 transition-colors hover:bg-black/[0.03]">
             {copy.gate.signIn}
           </button>
         </SignInButton>

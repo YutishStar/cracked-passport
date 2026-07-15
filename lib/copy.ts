@@ -56,6 +56,7 @@ export const copy = {
       about: "About",
       journey: "Journey",
       stamps: "House Stamps",
+      certificates: "Certificates",
       achievements: "Achievements",
       perks: "Perks",
     },

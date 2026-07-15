@@ -45,6 +45,7 @@ export const env = {
     return optional("DEPLOYER_PRIVATE_KEY");
   },
   passportContractAddress: optional("PASSPORT_CONTRACT_ADDRESS"),
+  certificatesContractAddress: optional("CERTIFICATES_CONTRACT_ADDRESS"),
   fujiRpcUrl:
     process.env.FUJI_RPC_URL ?? "https://api.avax-test.network/ext/bc/C/rpc",
   avalancheRpcUrl:

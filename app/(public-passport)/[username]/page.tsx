@@ -8,6 +8,8 @@ import { copy, fmt } from "@/lib/copy";
 import { PassportCard } from "@/components/passport/passport-card";
 import { StampGrid } from "@/components/passport/stamp-grid";
 import { PassportOpenTracker } from "@/components/passport/passport-open-tracker";
+import { CertificateList } from "@/components/passport/certificate-list";
+import { listFellowCertificates } from "@/lib/supabase/queries/activities";
 import {
   PassportSection,
   AboutSection,
@@ -42,7 +44,10 @@ export default async function PublicPassportPage({
   const fellow = await getFellowByUsername(username);
   if (!fellow || fellow.status !== "claimed") notFound();
 
-  const view = await loadPassport(fellow.id, { publicOnly: true });
+  const [view, certificates] = await Promise.all([
+    loadPassport(fellow.id, { publicOnly: true }),
+    listFellowCertificates(fellow.id),
+  ]);
   if (!view) notFound();
 
   const mrz = mrzLines({
@@ -89,6 +94,10 @@ export default async function PublicPassportPage({
 
         <PassportSection title={copy.passport.sections.stamps}>
           <StampGrid stamps={view.stamps} />
+        </PassportSection>
+
+        <PassportSection title={copy.passport.sections.certificates}>
+          <CertificateList items={certificates} />
         </PassportSection>
 
         <PassportSection title={copy.passport.sections.achievements}>

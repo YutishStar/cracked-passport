@@ -11,6 +11,9 @@ import { StampGrid } from "@/components/passport/stamp-grid";
 import { EditProfileSheet } from "@/components/passport/edit-profile-sheet";
 import { RequestVerification } from "@/components/passport/request-verification";
 import { UnderReview } from "@/components/passport/under-review";
+import { CertificateList } from "@/components/passport/certificate-list";
+import { CreateActivity } from "@/components/passport/create-activity";
+import { listFellowCertificates } from "@/lib/supabase/queries/activities";
 import {
   PassportSection,
   AboutSection,
@@ -39,7 +42,10 @@ export default async function PassportHome() {
     redirect("/welcome");
   }
 
-  const view = await loadPassport(fellow.id);
+  const [view, certificates] = await Promise.all([
+    loadPassport(fellow.id),
+    listFellowCertificates(fellow.id),
+  ]);
   if (!view) redirect("/");
 
   const mrz = mrzLines({
@@ -102,6 +108,18 @@ export default async function PassportHome() {
 
         <PassportSection title={copy.passport.sections.stamps}>
           <StampGrid stamps={view.stamps} canMarkSeen />
+        </PassportSection>
+
+        <PassportSection title={copy.passport.sections.certificates}>
+          <CertificateList items={certificates} />
+        </PassportSection>
+
+        {/* Daily build post — publish what you're shipping; anyone who was part
+            of it can claim the certificate from the link. */}
+        <PassportSection title="Today's Build">
+          <div className="max-w-lg">
+            <CreateActivity mode="build_post" />
+          </div>
         </PassportSection>
 
         <PassportSection title={copy.passport.sections.achievements}>
