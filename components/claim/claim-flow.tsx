@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { completeClaim } from "@/app/(auth)/claim/actions";
 import { slugifyUsername } from "@/lib/usernames";
 import { copy, fmt } from "@/lib/copy";
+import { DEMO_MODE } from "@/lib/demo";
 
 interface Props {
   token: string;
@@ -15,7 +16,9 @@ interface Props {
 }
 
 export function ClaimFlow({ token, fellowNumber, defaultUsername }: Props) {
-  const { isSignedIn, isLoaded } = useUser();
+  const { isSignedIn: clerkSignedIn, isLoaded: clerkLoaded } = useUser();
+  const isSignedIn = DEMO_MODE || clerkSignedIn;
+  const isLoaded = DEMO_MODE || clerkLoaded;
   const router = useRouter();
   const [username, setUsername] = useState(slugifyUsername(defaultUsername));
   const [error, setError] = useState<string | null>(null);

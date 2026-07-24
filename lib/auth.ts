@@ -3,16 +3,19 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { env } from "@/lib/env";
 import { getWalletSession } from "@/lib/wallet-session";
+import { DEMO_MODE } from "@/lib/demo";
 import type { Fellow } from "@/lib/supabase/types";
 
 /** Primary (verified) email of the signed-in user, lowercased. Null if signed out. */
 export async function currentUserEmail(): Promise<string | null> {
+  if (DEMO_MODE) return env.adminEmails[0] ?? null;
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress;
   return email ? email.toLowerCase() : null;
 }
 
 export async function isAdmin(): Promise<boolean> {
+  if (DEMO_MODE) return true;
   const email = await currentUserEmail();
   return !!email && env.adminEmails.includes(email);
 }
@@ -31,6 +34,20 @@ export async function requireAdmin(): Promise<void> {
  * wallet). Clerk is checked first since it's also how admin is identified.
  */
 export async function getCurrentFellow(): Promise<Fellow | null> {
+  if (DEMO_MODE) {
+    // No real session to key off of — "you" are whichever demo fellow
+    // claimed most recently (each claim gets its own fake clerk_user_id,
+    // see demoUserIdForToken).
+    const { data } = await supabaseAdmin()
+      .from("fellows")
+      .select("*")
+      .like("clerk_user_id", "demo-%")
+      .order("claimed_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle();
+    return (data as Fellow | null) ?? null;
+  }
+
   const { userId } = await auth();
   if (userId) {
     const { data } = await supabaseAdmin()
@@ -56,6 +73,7 @@ export async function getCurrentFellow(): Promise<Fellow | null> {
 
 /** True if the current session is a wallet session (Signed in with Core). */
 export async function isWalletSession(): Promise<boolean> {
+  if (DEMO_MODE) return false;
   const { userId } = await auth();
   if (userId) return false;
   return !!(await getWalletSession());

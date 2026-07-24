@@ -3,6 +3,7 @@ import { UserButton } from "@clerk/nextjs";
 import { FellowGate } from "@/components/fellow-gate";
 import { getWalletSession } from "@/lib/wallet-session";
 import { WalletAccountMenu } from "@/components/chain/wallet-account-menu";
+import { DEMO_MODE } from "@/lib/demo";
 
 /**
  * Passport routes require a signed-in user — either a Clerk session (email,
@@ -16,6 +17,10 @@ export default async function PassportLayout({
 }: {
   children: React.ReactNode;
 }) {
+  if (DEMO_MODE) {
+    return <>{children}</>;
+  }
+
   const { userId } = await auth();
   const wallet = userId ? null : await getWalletSession();
   if (!userId && !wallet) return <FellowGate />;

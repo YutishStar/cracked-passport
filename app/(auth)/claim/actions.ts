@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { hashClaimToken } from "@/lib/claim-tokens";
 import { validateUsername } from "@/lib/usernames";
+import { DEMO_MODE, demoUserIdForToken } from "@/lib/demo";
 
 export type CompleteClaimResult =
   | { ok: true; fellowNumber: number }
@@ -17,7 +18,7 @@ export async function completeClaim(
   rawToken: string,
   usernameInput: string,
 ): Promise<CompleteClaimResult> {
-  const { userId } = await auth();
+  const userId = DEMO_MODE ? demoUserIdForToken(rawToken) : (await auth()).userId;
   if (!userId) return { ok: false, error: "Please sign in first." };
 
   const check = validateUsername(usernameInput);
