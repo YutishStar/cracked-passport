@@ -6,16 +6,20 @@ import { getWalletSession } from "@/lib/wallet-session";
 import { DEMO_MODE } from "@/lib/demo";
 import type { Fellow } from "@/lib/supabase/types";
 
-/** Primary (verified) email of the signed-in user, lowercased. Null if signed out. */
+/**
+ * Primary (verified) email of the signed-in user, lowercased. Null if signed
+ * out. Deliberately NOT demo-bypassed — admin identity always requires a
+ * real Clerk session, even when DEMO_MODE has opened up the fellow-facing
+ * flows for frictionless public demos.
+ */
 export async function currentUserEmail(): Promise<string | null> {
-  if (DEMO_MODE) return env.adminEmails[0] ?? null;
   const user = await currentUser();
   const email = user?.primaryEmailAddress?.emailAddress;
   return email ? email.toLowerCase() : null;
 }
 
+/** Deliberately NOT demo-bypassed — see currentUserEmail. */
 export async function isAdmin(): Promise<boolean> {
-  if (DEMO_MODE) return true;
   const email = await currentUserEmail();
   return !!email && env.adminEmails.includes(email);
 }
